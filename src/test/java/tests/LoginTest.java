@@ -1,11 +1,23 @@
 package tests;
 
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 public class LoginTest extends BaseTest {
+
+    @DataProvider(name = "loginData")
+    public Object[][] loginData() {
+        return new Object[][]{
+                {"", "secret_sauce", "Epic sadface: Username is required"},
+                {"locked_out_user", "secret_sauce", "Epic sadface: Sorry, this user has been locked out."},
+                {"s", "secret_sauce", "Epic sadface: Username and password do not match any user in this service"},
+                {"standard_user", " ", "Epic sadface: Username and password do not match any user in this service"},
+                {"standard_user", "", "Epic sadface: Password is required"},
+        };
+    }
 
     @Test
     public void checkLogin() {
@@ -14,50 +26,12 @@ public class LoginTest extends BaseTest {
         assertEquals(productsPage.getTitle(), "Products");
     }
 
-    @Test
-    public void checkEmptyLogin() {
+    @Test(dataProvider = "loginData")
+    public void checkIncorrectLogin(String user, String password, String errorText) {
         loginPage.open();
-        loginPage.login("", "secret_sauce");
+        loginPage.login(user, password);
 
         assertTrue(loginPage.isErrorDisplayed());
-        assertEquals(loginPage.getErrorText(), "Epic sadface: Username is required");
-    }
-
-    @Test
-    public void checkLockedLogin() {
-        loginPage.open();
-        loginPage.login("locked_out_user", "secret_sauce");
-        assertTrue(loginPage.isErrorDisplayed());
-        assertEquals(loginPage.getErrorText(),
-                "Epic sadface: Sorry, this user has been locked out.");
-    }
-
-    @Test
-    public void checkIncorrectLogin() {
-        loginPage.open();
-        loginPage.login("s", "secret_sauce");
-
-        assertTrue(loginPage.isErrorDisplayed());
-        assertEquals(loginPage.getErrorText(),
-                "Epic sadface: Username and password do not match any user in this service");
-    }
-
-    @Test
-    public void checkIncorrectPassword() {
-        loginPage.open();
-        loginPage.login("standard_user", " ");
-
-        assertTrue(loginPage.isErrorDisplayed());
-        assertEquals(loginPage.getErrorText(),
-                "Epic sadface: Username and password do not match any user in this service");
-    }
-
-    @Test
-    public void checkEmptyPassword() {
-        loginPage.open();
-        loginPage.login("standard_user", "");
-
-        assertTrue(loginPage.isErrorDisplayed());
-        assertEquals(loginPage.getErrorText(), "Epic sadface: Password is required");
+        assertEquals(loginPage.getErrorText(), errorText);
     }
 }
